@@ -1,7 +1,7 @@
 # Use an official base image
 FROM ubuntu:20.04
 
-# Set environment variables to non-interactive 
+# Set environment variables to non-interactive
 ENV DEBIAN_FRONTEND=non-interactive
 
 # Install necessary tools
