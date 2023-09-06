@@ -1,5 +1,5 @@
 # Use an official base image
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # Set environment variables to non-interactive
 ENV DEBIAN_FRONTEND=non-interactive
