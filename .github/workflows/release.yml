@@ -8,8 +8,8 @@ on:  # yamllint disable-line rule:truthy
     - main
 
 jobs:
-  build_push:
-    name: Build & Push if Releasing
+  build_release:
+    name: Build & Release
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -25,16 +25,38 @@ jobs:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Release Dry-Run
+    - name: Docker meta
+      id: meta
+      uses: crazy-max/ghaction-docker-meta@v4
+      with:
+        images: ghcr.io/${{ github.repository_owner }}/docker-dce
+        tags: |
+          type=ref,event=branch
+          type=sha
+
+    - name: Build docker image (dry-run)
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        load: true
+        push: false
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: |
+          type=gha
+          ghcr.io/${{ github.repository_owner }}/docker-dce:latest
+          ghcr.io/${{ github.repository_owner }}/docker-dce:main
+        cache-to: type=gha,mode=max
+
+    - name: Semantic Release
       id: release
       uses: ahmadnassri/action-semantic-release@v2
-      with:
-        dry: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Docker meta
-      id: meta
+    - name: Docker meta (with version)
+      if: steps.release.outputs.published == 'true'
+      id: meta_versioned
       uses: crazy-max/ghaction-docker-meta@v4
       with:
         images: ghcr.io/${{ github.repository_owner }}/docker-dce
@@ -43,36 +65,16 @@ jobs:
           type=ref,event=branch
           type=sha
 
-    - name: Build docker image
+    - name: Build docker image and Push (for release)
+      if: steps.release.outputs.published == 'true'
       uses: docker/build-push-action@v4
       with:
         context: .
-        load: true
-        push: false
-        tags: ${{ steps.docker_metadata.outputs.tags }}
-        labels: ${{ steps.docker_metadata.outputs.labels }}
+        push: true
+        tags: ${{ steps.meta_versioned.outputs.tags }}
+        labels: ${{ steps.meta_versioned.outputs.labels }}
         cache-from: |
           type=gha
           ghcr.io/${{ github.repository_owner }}/docker-dce:latest
           ghcr.io/${{ github.repository_owner }}/docker-dce:main
-          ghcr.io/${{ github.repository_owner }}/docker-dce:${{ github.ref_name }}
-        cache-to: type=gha,mode=max
-
-    - name: Release
-      uses: ahmadnassri/action-semantic-release@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Build docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.docker_metadata.outputs.tags }}
-        labels: ${{ steps.docker_metadata.outputs.labels }}
-        cache-from: |
-          type=gha
-          ghcr.io/${{ github.repository_owner }}/docker-dce:latest
-          ghcr.io/${{ github.repository_owner }}/docker-dce:main
-          ghcr.io/${{ github.repository_owner }}/docker-dce:${{ github.ref_name }}
         cache-to: type=gha,mode=max
