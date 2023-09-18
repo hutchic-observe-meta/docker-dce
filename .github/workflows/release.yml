@@ -35,7 +35,7 @@ jobs:
           type=sha
 
     - name: Build docker image (dry-run)
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v5
       with:
         context: .
         load: true
@@ -67,7 +67,7 @@ jobs:
 
     - name: Build docker image and Push (for release)
       if: steps.release.outputs.published == 'true'
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v5
       with:
         context: .
         push: true
