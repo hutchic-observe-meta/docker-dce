@@ -27,7 +27,7 @@ jobs:
 
     - name: Docker meta
       id: meta
-      uses: crazy-max/ghaction-docker-meta@v4
+      uses: crazy-max/ghaction-docker-meta@v5
       with:
         images: ghcr.io/${{ github.repository_owner }}/docker-dce
         tags: |
@@ -57,7 +57,7 @@ jobs:
     - name: Docker meta (with version)
       if: steps.release.outputs.published == 'true'
       id: meta_versioned
-      uses: crazy-max/ghaction-docker-meta@v4
+      uses: crazy-max/ghaction-docker-meta@v5
       with:
         images: ghcr.io/${{ github.repository_owner }}/docker-dce
         tags: |
